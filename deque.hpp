@@ -14,112 +14,106 @@ template <class T> class deque {
 public:
   class const_iterator;
   class iterator {
-    using base_iter = typename std::deque<T>::iterator;
-    base_iter it;
+    long long idx = 0;
     const deque<T> *owner = nullptr;
     friend class deque<T>;
     friend class const_iterator;
 
   public:
     iterator() = default;
-    explicit iterator(base_iter b, const deque<T> *o) : it(b), owner(o) {}
+    explicit iterator(long long i, const deque<T> *o) : idx(i), owner(o) {}
 
-    iterator operator+(const int &n) const { return iterator(it + n, owner); }
-    iterator operator-(const int &n) const { return iterator(it - n, owner); }
+    iterator operator+(const int &n) const { return iterator(idx + n, owner); }
+    iterator operator-(const int &n) const { return iterator(idx - n, owner); }
     int operator-(const iterator &rhs) const {
       if (owner != rhs.owner) throw invalid_iterator();
-      return static_cast<int>(it - rhs.it);
+      return static_cast<int>(idx - rhs.idx);
     }
     iterator &operator+=(const int &n) {
-      it += n;
+      idx += n;
       return *this;
     }
     iterator &operator-=(const int &n) {
-      it -= n;
+      idx -= n;
       return *this;
     }
     iterator operator++(int) {
       iterator tmp(*this);
-      ++it;
+      ++idx;
       return tmp;
     }
     iterator &operator++() {
-      ++it;
+      ++idx;
       return *this;
     }
     iterator operator--(int) {
       iterator tmp(*this);
-      --it;
+      --idx;
       return tmp;
     }
     iterator &operator--() {
-      --it;
+      --idx;
       return *this;
     }
-    T &operator*() const { return const_cast<T&>(*it); }
-    T *operator->() const noexcept { return &const_cast<T&>(*it); }
-    bool operator==(const iterator &rhs) const { return it == rhs.it && owner == rhs.owner; }
+    T &operator*() const {
+      if (owner == nullptr || idx < 0 || static_cast<size_t>(idx) >= owner->impl.size())
+        throw invalid_iterator();
+      return const_cast<T &>(owner->impl[static_cast<size_t>(idx)]);
+    }
+    T *operator->() const noexcept { return &const_cast<T &>(owner->impl[static_cast<size_t>(idx)]); }
+    bool operator==(const iterator &rhs) const { return idx == rhs.idx && owner == rhs.owner; }
     bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
-    bool operator==(const typename deque<T>::const_iterator &rhs) const {
-      return it == rhs.it && owner == rhs.owner;
-    }
-    bool operator!=(const typename deque<T>::const_iterator &rhs) const {
-      return !(*this == rhs);
-    }
   };
 
   class const_iterator {
-    using base_iter = typename std::deque<T>::const_iterator;
-    base_iter it;
+    long long idx = 0;
     const deque<T> *owner = nullptr;
     friend class deque<T>;
 
   public:
     const_iterator() = default;
-    explicit const_iterator(base_iter b, const deque<T> *o) : it(b), owner(o) {}
-    const_iterator(const iterator &other) : it(other.it), owner(other.owner) {}
-    const_iterator operator+(const int &n) const { return const_iterator(it + n, owner); }
-    const_iterator operator-(const int &n) const { return const_iterator(it - n, owner); }
+    explicit const_iterator(long long i, const deque<T> *o) : idx(i), owner(o) {}
+    const_iterator(const iterator &other) : idx(other.idx), owner(other.owner) {}
+    const_iterator operator+(const int &n) const { return const_iterator(idx + n, owner); }
+    const_iterator operator-(const int &n) const { return const_iterator(idx - n, owner); }
     int operator-(const const_iterator &rhs) const {
       if (owner != rhs.owner) throw invalid_iterator();
-      return static_cast<int>(it - rhs.it);
+      return static_cast<int>(idx - rhs.idx);
     }
     const_iterator &operator+=(const int &n) {
-      it += n;
+      idx += n;
       return *this;
     }
     const_iterator &operator-=(const int &n) {
-      it -= n;
+      idx -= n;
       return *this;
     }
     const_iterator operator++(int) {
       const_iterator tmp(*this);
-      ++it;
+      ++idx;
       return tmp;
     }
     const_iterator &operator++() {
-      ++it;
+      ++idx;
       return *this;
     }
     const_iterator operator--(int) {
       const_iterator tmp(*this);
-      --it;
+      --idx;
       return tmp;
     }
     const_iterator &operator--() {
-      --it;
+      --idx;
       return *this;
     }
-    const T &operator*() const { return *it; }
-    const T *operator->() const noexcept { return it.operator->(); }
-    bool operator==(const const_iterator &rhs) const { return it == rhs.it && owner == rhs.owner; }
+    const T &operator*() const {
+      if (owner == nullptr || idx < 0 || static_cast<size_t>(idx) >= owner->impl.size())
+        throw invalid_iterator();
+      return owner->impl[static_cast<size_t>(idx)];
+    }
+    const T *operator->() const noexcept { return &owner->impl[static_cast<size_t>(idx)]; }
+    bool operator==(const const_iterator &rhs) const { return idx == rhs.idx && owner == rhs.owner; }
     bool operator!=(const const_iterator &rhs) const { return !(*this == rhs); }
-    bool operator==(const typename deque<T>::iterator &rhs) const {
-      return rhs == *this;
-    }
-    bool operator!=(const typename deque<T>::iterator &rhs) const {
-      return !(rhs == *this);
-    }
   };
 
   deque() = default;
@@ -147,10 +141,10 @@ public:
     return impl.back();
   }
 
-  iterator begin() { return iterator(impl.begin(), this); }
-  const_iterator cbegin() const { return const_iterator(impl.cbegin(), this); }
-  iterator end() { return iterator(impl.end(), this); }
-  const_iterator cend() const { return const_iterator(impl.cend(), this); }
+  iterator begin() { return iterator(0, this); }
+  const_iterator cbegin() const { return const_iterator(0, this); }
+  iterator end() { return iterator(static_cast<long long>(impl.size()), this); }
+  const_iterator cend() const { return const_iterator(static_cast<long long>(impl.size()), this); }
 
   bool empty() const { return impl.empty(); }
   size_t size() const { return impl.size(); }
@@ -158,13 +152,19 @@ public:
 
   iterator insert(iterator pos, const T &value) {
     if (pos.owner != this) throw invalid_iterator();
-    auto it2 = impl.insert(pos.it, value);
-    return iterator(it2, this);
+    long long p = pos.idx;
+    if (p < 0 || p > static_cast<long long>(impl.size())) throw invalid_iterator();
+    impl.insert(impl.begin() + p, value);
+    return iterator(p, this);
   }
   iterator erase(iterator pos) {
     if (pos.owner != this) throw invalid_iterator();
-    auto it2 = impl.erase(pos.it);
-    return iterator(it2, this);
+    long long p = pos.idx;
+    if (p < 0 || p >= static_cast<long long>(impl.size())) throw invalid_iterator();
+    impl.erase(impl.begin() + p);
+    // Return iterator to following element (same index p), or end() if erased last
+    if (p > static_cast<long long>(impl.size())) p = static_cast<long long>(impl.size());
+    return iterator(p, this);
   }
   void push_back(const T &value) { impl.push_back(value); }
   void pop_back() {
