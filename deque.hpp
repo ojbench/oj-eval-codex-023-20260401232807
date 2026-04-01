@@ -60,7 +60,11 @@ public:
         throw invalid_iterator();
       return const_cast<T &>(owner->impl[static_cast<size_t>(idx)]);
     }
-    T *operator->() const noexcept { return &const_cast<T &>(owner->impl[static_cast<size_t>(idx)]); }
+    T *operator->() const {
+      if (owner == nullptr || idx < 0 || static_cast<size_t>(idx) >= owner->impl.size())
+        throw invalid_iterator();
+      return &const_cast<T &>(owner->impl[static_cast<size_t>(idx)]);
+    }
     bool operator==(const iterator &rhs) const { return idx == rhs.idx && owner == rhs.owner; }
     bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
   };
@@ -111,7 +115,11 @@ public:
         throw invalid_iterator();
       return owner->impl[static_cast<size_t>(idx)];
     }
-    const T *operator->() const noexcept { return &owner->impl[static_cast<size_t>(idx)]; }
+    const T *operator->() const {
+      if (owner == nullptr || idx < 0 || static_cast<size_t>(idx) >= owner->impl.size())
+        throw invalid_iterator();
+      return &owner->impl[static_cast<size_t>(idx)];
+    }
     bool operator==(const const_iterator &rhs) const { return idx == rhs.idx && owner == rhs.owner; }
     bool operator!=(const const_iterator &rhs) const { return !(*this == rhs); }
   };
