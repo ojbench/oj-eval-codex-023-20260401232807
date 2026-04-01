@@ -137,8 +137,14 @@ public:
     if (pos >= impl.size()) throw index_out_of_bound();
     return impl.at(pos);
   }
-  T &operator[](const size_t &pos) { return impl[pos]; }
-  const T &operator[](const size_t &pos) const { return impl[pos]; }
+  T &operator[](const size_t &pos) {
+    if (pos >= impl.size()) throw index_out_of_bound();
+    return impl[pos];
+  }
+  const T &operator[](const size_t &pos) const {
+    if (pos >= impl.size()) throw index_out_of_bound();
+    return impl[pos];
+  }
 
   const T &front() const {
     if (impl.empty()) throw container_is_empty();
